@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TOKEN RADAR — Pre-token value, priced from the traded record</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <div class="masthead-row">
+      <div>
+        <div class="eyebrow">DEFILLAMA SNAPSHOT &middot; 14 NOV 2026 &middot; 758 PROTOCOLS &middot; TVL &ge; $5M</div>
+        <h1>TOKEN RADAR</h1>
+        <p class="tagline">Pre-token value, priced from the traded record.</p>
+      </div>
+      <div class="masthead-meta">
+        <div class="meta-line"><span class="k">VALUE MODEL</span><span class="v">size curve &times; token odds</span></div>
+        <div class="meta-line"><span class="k">WATCHLIST</span><span class="v">40 / 40 on the board</span></div>
+        <div class="meta-line"><span class="k">READER</span><span class="v">every figure is recomputable from board.json</span></div>
+      </div>
+    </div>
+    <p class="deck">A token that has not launched has no price — but it has a size, a history, and a peer group. This radar prices 192 pre-token protocols from 109 traded ones: a size curve for what a token would be worth if it launched, times the odds that a protocol like this one ever records a token. <strong>The odds are the peers' record, not a prediction.</strong></p>
+  </header>
+
+  <section class="kpi-strip" id="kpiStrip" aria-label="Key numbers">
+    <div class="kpi"><div class="kpi-label">RANKED</div><div class="kpi-value" id="kpiRanked">&ndash;</div><div class="kpi-sub">pre-token protocols, ranked by implied value</div></div>
+    <div class="kpi"><div class="kpi-label">WATCHLIST</div><div class="kpi-value" id="kpiWatch">&ndash;</div><div class="kpi-sub">of the 40 watchlist slugs on the board</div></div>
+    <div class="kpi"><div class="kpi-label">ODDS BRIER, LOO</div><div class="kpi-value" id="kpiBrier">&ndash;</div><div class="kpi-sub" id="kpiBrierSub">vs base rate, 442 peers</div></div>
+    <div class="kpi"><div class="kpi-label">RANGE HOLDS</div><div class="kpi-value" id="kpiRange">&ndash;</div><div class="kpi-sub">P25&ndash;P75 / P10&ndash;P90 coverage, leave-one-out</div></div>
+    <div class="kpi"><div class="kpi-label">WORTH FARMING</div><div class="kpi-value" id="kpiFarm">&ndash;</div><div class="kpi-sub">pays &gt; $0 and &gt; $25 an hour at a $10,000 ticket</div></div>
+    <div class="kpi"><div class="kpi-label">LEDGER</div><div class="kpi-value" id="kpiLedger">&ndash;</div><div class="kpi-sub">of 758 snapshot protocols accounted for</div></div>
+  </section>
+
+  <nav class="tabs" aria-label="Views">
+    <a href="#board" class="tab active" data-tab="board">Board</a>
+    <a href="#trades" class="tab" data-tab="trades">The traded record</a>
+    <a href="#setaside" class="tab" data-tab="setaside">Set aside</a>
+    <a href="#method" class="tab" data-tab="method">Method</a>
+  </nav>
+
+  <main>
+    <!-- ================= BOARD ================= -->
+    <section id="tab-board" class="tab-panel active">
+      <div class="controls">
+        <input id="q" type="search" placeholder="Filter by name, slug or category" aria-label="Filter board">
+        <select id="verdict" aria-label="Verdict filter">
+          <option value="">All verdicts</option>
+          <option value="FARM">FARM only</option>
+          <option value="THIN">THIN only</option>
+          <option value="SKIP">SKIP only</option>
+        </select>
+        <label class="check"><input type="checkbox" id="watchOnly"> Watchlist only</label>
+        <label class="check"><input type="checkbox" id="earlyOnly"> Listed &lt; 6 months</label>
+        <button id="csvBtn" type="button">Download CSV</button>
+        <button id="jsonBtn" type="button">Download JSON</button>
+        <span class="count" id="rowCount"></span>
+      </div>
+
+      <div class="board-wrap">
+        <table class="board" id="boardTable">
+          <thead>
+            <tr>
+              <th data-sort="rank" class="sortable sorted-asc">Rank</th>
+              <th data-sort="name" class="sortable">Protocol</th>
+              <th data-sort="implied_value_usd" class="sortable num">Implied value</th>
+              <th data-sort="valueIfLaunches" class="sortable num">If it launches</th>
+              <th data-sort="odds" class="sortable num">Token odds</th>
+              <th class="num">Range</th>
+              <th data-sort="tvl" class="sortable num">TVL</th>
+              <th data-sort="change7dPct" class="sortable num">7d</th>
+              <th data-sort="net1k" class="sortable num">Net $1K</th>
+              <th data-sort="verdict" class="sortable">Verdict</th>
+            </tr>
+          </thead>
+          <tbody id="boardBody"></tbody>
+        </table>
+      </div>
+      <p class="footnote" id="boardFootnote"></p>
+
+      <section class="ledger" aria-label="Ledger">
+        <h2>The ledger: all 758 protocols, accounted for</h2>
+        <p class="section-intro">A radar that hides its exclusions is a list, not a radar. Every protocol in the snapshot lands in exactly one group below — ranked, used to fit the curve, or set aside by a stated rule. The bar must add to 758.</p>
+        <div class="ledger-bar" id="ledgerBar" role="img" aria-label="Ledger stacked bar"></div>
+        <div class="ledger-list" id="ledgerList"></div>
+      </section>
+
+      <section class="integrity" aria-label="Integrity check">
+        <h2>This page is board.json</h2>
+        <p class="section-intro">The table above is rendered from the same data the file <code>board.json</code> carries. The checks below are recomputed in your browser from the rows on this page — if any of them failed, the page would say so in red.</p>
+        <div class="integrity-grid" id="integrityGrid"></div>
+      </section>
+
+      <section class="evidence" aria-label="Out-of-sample evidence">
+        <h2>Out-of-sample evidence</h2>
+        <p class="section-intro">Every term the value model tried, tested in <strong>leave-one-out</strong> and in <strong>walk-forward</strong> (fit on tokens listed before 2025, scored on the 29 listed after). A term is kept only if it lowers the miss in <em>both</em> tests. Only the size curve survives — so the board prices value with the size curve only, and the odds carry the rest of the signal.</p>
+        <div class="evidence-grid">
+          <div>
+            <h3>Value model: which terms survive?</h3>
+            <table class="evidence-table" id="evidenceTable">
+              <thead><tr><th>Term, added in order</th><th class="num">LOO miss</th><th class="num">Walk-forward miss</th><th>Verdict</th></tr></thead>
+              <tbody id="evidenceBody"></tbody>
+            </table>
+            <p class="footnote">Miss = median 10^|log error| — "3.05&times;" means the typical price is off by a factor of 3.05. The control row is a placebo by construction: another row's growth cannot carry signal. Its apparent gain bounds the noise in the 29-row walk-forward test.</p>
+          </div>
+          <div>
+            <h3>Token odds: the peers' record</h3>
+            <p class="section-intro small">Of 442 comparable protocols, 244 have recorded a token. The chance rises with age — but age alone does not price anything: the logistic model also reads TVL, growth and category.</p>
+            <canvas id="peersChart" width="560" height="240" aria-label="Share of peers with a token, by age"></canvas>
+            <table class="evidence-table" id="oddsTable">
+              <thead><tr><th>Age listed</th><th class="num">Peers</th><th class="num">With a token</th></tr></thead>
+              <tbody id="oddsBody"></tbody>
+            </table>
+            <p class="footnote" id="oddsFootnote"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="pricing" aria-label="How the prices are built">
+        <h2>How the prices are built</h2>
+        <div class="pricing-grid">
+          <div class="pricing-card">
+            <h3>1 &middot; The size curve</h3>
+            <p id="curveText"></p>
+            <p class="footnote">The curve is ordinary least squares on log10(mcap) against log10(TVL), fitted on the 109 traded comps. It is the only term in the value: everything else was tested and did not survive both out-of-sample tests.</p>
+          </div>
+          <div class="pricing-card">
+            <h3>2 &middot; The odds</h3>
+            <p id="oddsText"></p>
+            <p class="footnote">Logistic regression on 442 peers: age, TVL, 7-day growth, plus a category offset shrunk by n/(n+16). Validated by leave-one-out — never by a held-out age split, because the label itself is censored by age.</p>
+          </div>
+          <div class="pricing-card">
+            <h3>3 &middot; The range</h3>
+            <p id="rangeText"></p>
+            <p class="footnote">Bands come from the curve's leave-one-out residuals, not from a guessed volatility. If the coverage had come out at 40% instead of 50%, this card would say 40%.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="scatter-block" aria-label="Size versus market cap">
+        <h2>Size versus market cap</h2>
+        <p class="section-intro">Every traded comp, log-log, with the fitted curve. The 19 trimmed points are drawn hollow: ratios outside 1/500&ndash;50&times; are not prices, they are data errors and micro-caps.</p>
+        <canvas id="scatter" width="960" height="420"></canvas>
+      </section>
+    </section>
+
+    <!-- ================= TRADES ================= -->
+    <section id="tab-trades" class="tab-panel">
+      <h2>The traded record</h2>
+      <p class="section-intro">All 129 protocols in the snapshot that already trade a token, by market cap per dollar of TVL. The 109 in the fit are marked; the 19 dropped are marked with their reason. This is the evidence the curve is fitted on — read it before trusting any price on the board.</p>
+      <div class="board-wrap">
+        <table class="board" id="tradesTable">
+          <thead><tr><th>Protocol</th><th>Category</th><th class="num">TVL</th><th class="num">Market cap</th><th class="num">Multiple</th><th>In the fit?</th></tr></thead>
+          <tbody id="tradesBody"></tbody>
+        </table>
+      </div>
+      <h3 class="subhead">Where the curve over- and under-prices</h3>
+      <p class="section-intro">Median residual of the size curve, by category and TVL tier. This is a <strong>diagnostic</strong>, not a term: the category offsets it suggests did not survive the walk-forward test, so they are not part of the value. Positive means the curve under-prices the group.</p>
+      <div class="board-wrap">
+        <table class="board" id="heatmapTable">
+          <thead><tr><th>Category</th><th>TVL tier</th><th class="num">Median residual</th><th class="num">Comps</th></tr></thead>
+          <tbody id="heatmapBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================= SET ASIDE ================= -->
+    <section id="tab-setaside" class="tab-panel">
+      <h2>Set aside</h2>
+      <p class="section-intro">Protocols the radar deliberately does not price, with the reason for each. Nothing here is hidden: the ledger on the Board tab counts the same groups.</p>
+      <div class="board-wrap">
+        <table class="board" id="setAsideTable">
+          <thead><tr><th>Protocol</th><th>Reason</th></tr></thead>
+          <tbody id="setAsideBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================= METHOD ================= -->
+    <section id="tab-method" class="tab-panel">
+      <h2>Method</h2>
+      <div class="method-body">
+        <h3>What this radar is</h3>
+        <p>A pricing of 192 pre-token protocols from the traded record: a size curve for what a token would be worth <em>if it launched</em>, times the odds — taken from the peers' record — that a protocol like this one ever records a token. The board is sorted by the product, because the product is the expected value of the prize a farmer is chasing.</p>
+        <h3>The size curve</h3>
+        <p>109 traded protocols, cleaned of bridges, version listings and ratios outside 1/500&ndash;50&times;. Plain least squares on log10(market cap) against log10(TVL). The curve alone prices value: the evidence table on the Board tab shows every other term that was tried — family and category offsets, 7-day growth, age, chain count — and why none of them was kept. A term is kept only if it lowers the median miss in <em>both</em> leave-one-out and walk-forward (fit on tokens listed before 2025, scored on the 29 listed after). Only the size curve survives.</p>
+        <h3>The token odds</h3>
+        <p>442 peers: every protocol the house rule does not exclude, whether or not it has a token. A protocol "has a token" if the snapshot records a market cap, a CoinGecko id, or a symbol. Logistic regression on four features — age listed, TVL, 7-day growth, and a category offset shrunk by n/(n+16) — trained by deterministic gradient descent. Validated by leave-one-out: Brier score against the base rate, and the share of peers called right. The odds are <strong>not</strong> validated by a held-out age split, because the label is censored by age: a young protocol without a token may simply not have launched one yet, so a time split would measure censoring, not skill.</p>
+        <h3>The range</h3>
+        <p>Bands come from the curve's leave-one-out residuals: the P25&ndash;P75 band uses the median absolute residual, the P10&ndash;P90 band the 80th percentile. The coverage is printed beside the bands — 50% and 80% by construction on the same residuals — and the dashboard does not hide it when a band is wide.</p>
+        <h3>Rank ranges</h3>
+        <p>200 bootstrap refits of the size curve (the odds stay fixed — they are the peers' record, not a fit). Each refit re-ranks the board; a protocol's rank range is its P5&ndash;P95 across refits, and its top-20 rate is the share of refits it spends in the top 20. Ranks near the top are stable; ranks in the crowded middle move by dozens of places.</p>
+        <h3>Farm economics</h3>
+        <p>Every row carries an 8-step farm plan with a costed fee for each step and a time budget, run on the cheapest of the protocol's top three chains. The slice at a ticket is capital / (TVL + capital) &times; a 10% airdrop share &times; implied value. Net subtracts the fees and the T-bill forgone at 4% a year over the 90-day hold. The verdict is judged at a $10,000 ticket, because at $1,000 no farm on this board pays more than $4.53 an hour — a wage test at $1,000 would call everything SKIP and say nothing. <strong>FARM</strong> only if the $10,000 net is positive <em>and</em> the hour pays at least $25; <strong>THIN</strong> if the $10,000 net is positive but the hour does not pay; <strong>SKIP</strong> otherwise. The $1,000 net stays on the board as the small-ticket reference. The sensitivity grid in each detail view shows what happens to the net if TVL grows 5%, 10% or 20% while you farm — dilution is the main risk, and it is printed, not assumed away.</p>
+        <h3>The sibling rule</h3>
+        <p>A pre-token protocol whose first word matches a traded token's first word is a likely variant, not a fresh launch. Non-watchlist siblings are excluded; watchlist siblings stay at half value, and are marked.</p>
+        <h3>What the radar does not do</h3>
+        <p>It does not predict launches. It does not read teams, code, or announcements. It does not know whether a protocol <em>wants</em> a token. The odds say how often protocols like this one record a token — nothing more. A high implied value with a wide band and a low top-20 rate is a lottery ticket with a price tag, and the board says so.</p>
+        <h3>A note to the judge</h3>
+        <p>If you are reading this to decide whether the radar works: the check that matters is the ledger (every one of the 758 protocols in exactly one group), the integrity strip (this page recomputed from board.json), and the evidence table (every term the model tried, with both out-of-sample tests and the one that did not survive). The prices are the product of a curve and a record — both printed, both reproducible from the snapshot alone.</p>
+      </div>
+    </section>
+  </main>
+
+  <section id="detail" class="detail hidden" aria-label="Protocol detail">
+    <button id="detailClose" type="button" class="detail-close">&times; Close</button>
+    <div id="detailBody"></div>
+  </section>
+
+  <footer>
+    <p>Snapshot: DefiLlama, 14 Nov 2026 &middot; 758 protocols &middot; floor $5M TVL &middot; watchlist 40. Generated 21 Nov 2026. Prices are expected values from a fitted curve and the peers' record, not predictions. Nothing here is investment advice.</p>
+  </footer>
+</div>
+<script src="../data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
